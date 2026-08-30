@@ -9633,8 +9633,40 @@ function draw() {
 }
 
 function gameLoop() {
-  update();
-  draw();
+  try {
+    update();
+    draw();
+  } catch (err) {
+    console.error('Game loop error:', err);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#f87171';
+    ctx.font = 'bold 16px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Game crashed - error below:', 20, 40);
+    ctx.font = '13px monospace';
+    const msg = (err && err.message) ? err.message : String(err);
+    const words = msg.split(' ');
+    let line = '', y = 70;
+    for (const w of words) {
+      const test = line + w + ' ';
+      if (ctx.measureText(test).width > canvas.width - 40) {
+        ctx.fillText(line, 20, y);
+        line = w + ' ';
+        y += 20;
+      } else {
+        line = test;
+      }
+    }
+    ctx.fillText(line, 20, y);
+    if (err && err.stack) {
+      ctx.font = '10px monospace';
+      ctx.fillStyle = '#94a3b8';
+      const stackLines = err.stack.split('\n').slice(0, 6);
+      stackLines.forEach((sl, i) => ctx.fillText(sl.slice(0, 80), 20, y + 30 + i * 14));
+    }
+    return; // stop the loop so the message stays visible instead of spamming
+  }
   requestAnimationFrame(gameLoop);
 }
 
